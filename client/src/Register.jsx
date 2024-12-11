@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Register = () => {
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -9,6 +12,8 @@ const Register = () => {
     password: '',
     confirmPassword: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
@@ -19,17 +24,22 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      setError("Passwords don't match!");
+      setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:3001/register', {
+      const response = await fetch(`${apiUrl}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -38,15 +48,17 @@ const Register = () => {
         })
       });
 
+      const data = await response.json();
       if (response.ok) {
-        alert('Registration successful!');
-        // Redirect to login or handle success
+        navigate('/login');
       } else {
-        alert('Registration failed!');
+        setError(data.message || 'Registration failed!');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Registration failed!');
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,6 +67,8 @@ const Register = () => {
       <form className="form" onSubmit={handleSubmit}>
         <p className="title">Register </p>
         <p className="message">Signup now and get full access to our app. </p>
+        {error && <p className="error">{error}</p>}
+        
         <div className="flex">
           <label>
             <input 
@@ -63,6 +77,7 @@ const Register = () => {
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
+              disabled={loading}
               required 
             />
             <span>Firstname</span>
@@ -74,6 +89,7 @@ const Register = () => {
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
+              disabled={loading}
               required 
             />
             <span>Lastname</span>
@@ -86,6 +102,7 @@ const Register = () => {
             name="email"
             value={formData.email}
             onChange={handleChange}
+            disabled={loading}
             required 
           />
           <span>Email</span>
@@ -97,6 +114,7 @@ const Register = () => {
             name="password"
             value={formData.password}
             onChange={handleChange}
+            disabled={loading}
             required 
           />
           <span>Password</span>
@@ -108,12 +126,17 @@ const Register = () => {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
+            disabled={loading}
             required 
           />
           <span>Confirm password</span>
         </label>
-        <button className="submit">Submit</button>
-        <p className="signin">Already have an acount ? <a href="Login">Login</a> </p>
+        <button className="submit" disabled={loading}>
+          {loading ? 'Registering...' : 'Submit'}
+        </button>
+        <p className="signin">
+          Already have an account? <Link to="/login">Login</Link>
+        </p>
       </form>
     </StyledWrapper>
   );
@@ -246,6 +269,17 @@ const StyledWrapper = styled.div`
     cursor: pointer;
   }
 
+  .error {
+    color: #ff3333;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .submit:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
   @keyframes pulse {
     from {
       transform: scale(0.9);
@@ -257,5 +291,6 @@ const StyledWrapper = styled.div`
       opacity: 0;
     }
   }`;
+
 
 export default Register;
