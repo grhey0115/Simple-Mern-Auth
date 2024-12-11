@@ -1,58 +1,73 @@
 import React, { useState } from 'react';
 
 const LoginWithOTP = () => {
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSendOtp = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const response = await fetch('http://localhost:3001/send-otp', {
+      const response = await fetch(`${apiUrl}/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email })
       });
 
+      const data = await response.json();
       if (response.ok) {
-        alert('OTP sent to your email!');
         setOtpSent(true);
       } else {
-        alert('Failed to send OTP');
+        setError(data.message || 'Failed to send OTP');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to send OTP');
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleVerifyOtp = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const response = await fetch('http://localhost:3001/verify-otp', {
+      const response = await fetch(`${apiUrl}/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, otp })
       });
 
+      const data = await response.json();
       if (response.ok) {
-        const data = await response.json();
-        alert('Login successful!');
-        // Save token and redirect or handle success
+        localStorage.setItem('token', data.token);
+        // You might want to add navigation here
       } else {
-        alert('Invalid OTP');
+        setError(data.message || 'Invalid OTP');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to verify OTP');
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <input
         type="email"
         placeholder="Enter your email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        disabled={loading}
         required
       />
       {otpSent && (
@@ -61,13 +76,19 @@ const LoginWithOTP = () => {
           placeholder="Enter OTP"
           value={otp}
           onChange={(e) => setOtp(e.target.value)}
+          disabled={loading}
+          maxLength={6}
           required
         />
       )}
       {!otpSent ? (
-        <button onClick={handleSendOtp}>Send OTP</button>
+        <button onClick={handleSendOtp} disabled={loading}>
+          {loading ? 'Sending...' : 'Send OTP'}
+        </button>
       ) : (
-        <button onClick={handleVerifyOtp}>Verify OTP</button>
+        <button onClick={handleVerifyOtp} disabled={loading}>
+          {loading ? 'Verifying...' : 'Verify OTP'}
+        </button>
       )}
     </div>
   );

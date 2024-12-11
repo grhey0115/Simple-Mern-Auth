@@ -9,50 +9,69 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!formData.email || !formData.password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch('http://localhost:3001/login', {
+      const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
+        credentials: 'include',
       });
-
+  
       const data = await response.json();
       if (response.ok) {
         setOtpSent(true);
       } else {
-        setError(data.message || 'Login failed!');
+        setError(data.message || 'Invalid email or password');
       }
     } catch (error) {
       console.error('Error:', error);
-      setError('Login failed! Please try again.');
+      setError('Network error. Please check your connection.');
     } finally {
       setLoading(false);
     }
   };
+  
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!otp || otp.length < 4) {
+      setError('Please enter a valid OTP');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch('http://localhost:3001/verify-otp', {
+      const response = await fetch(`${apiUrl}/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           email: formData.email,
-          otp: otp
-        })
+          otp: otp,
+        }),
       });
-
+  
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem('token', data.token);
@@ -62,7 +81,30 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      setError('OTP verification failed');
+      setError('Network error. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch(`${apiUrl}/resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+      alert('OTP resent successfully!');
+    } catch (error) {
+      setError('Failed to resend OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -124,6 +166,7 @@ const Login = () => {
               className="input"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
+              maxLength={6}
             />
             <span>OTP</span>
           </label>
@@ -131,6 +174,11 @@ const Login = () => {
           <button className="submit" disabled={loading}>
             {loading ? 'Verifying...' : 'Verify OTP'}
           </button>
+          
+          <p className="signin">
+            Didn't receive OTP? {' '}
+            <a href="#" onClick={handleResendOtp}>Resend OTP</a>
+          </p>
         </form>
       )}
     </StyledWrapper>
