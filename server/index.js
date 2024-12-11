@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const User = require("./models/User");
@@ -17,7 +18,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "https://simple-mern-auths.vercel.app",
   credentials: true
 }));
 app.use(express.json());
@@ -44,7 +45,7 @@ transporter.verify((error, success) => {
   });
 
   app.use(cors({
-    origin: "http://localhost:5173",
+    origin: "https://simple-mern-auths.vercel.app",
     credentials: true
   }));
 
@@ -169,9 +170,3 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-if (process.env.VERCEL) {
-  console.log('Running on Vercel');
-} else {
-  console.log('Not running on Vercel');
-}
