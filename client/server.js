@@ -1,1 +1,1 @@
-export const backend_url = "simple-mern-auth.vercel.app";
+export const backend_url = "https://simple-mern-auth.vercel.app";
