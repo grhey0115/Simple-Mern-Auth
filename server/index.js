@@ -15,13 +15,21 @@ dotenv.config();
   
 
 const app = express();
-
+app.options('*', cors()); 
 // Middleware
 app.use(cors({
-  origin: "https://simple-mern-auths.vercel.app",
+  origin: "https://simple-mern-auths.vercel.app/",
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
 }));
 app.use(express.json());
+
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log('Request Origin:', req.headers.origin);
+  res.header('Access-Control-Allow-Origin', 'https://simple-mern-auths.vercel.app'); // Debugging override
+  next();
+});
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
@@ -98,6 +106,11 @@ app.post("/login", async (req, res) => {
       res.status(500).json({ message: "Server error" });
     }
   });
+  
+  app.get("/login", (req, res) => {
+    res.json({ message: "GET request works, but use POST for login." });
+  });
+
   
   // Verify OTP route
   app.post("/verify-otp", async (req, res) => {
