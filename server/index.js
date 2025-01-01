@@ -19,9 +19,17 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: "https://simple-mern-auths.vercel.app/",
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
 }));
 app.use(express.json());
+
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log('Request Origin:', req.headers.origin);
+  res.header('Access-Control-Allow-Origin', 'https://simple-mern-auths.vercel.app'); // Debugging override
+  next();
+});
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
