@@ -15,7 +15,11 @@ dotenv.config();
   
 
 const app = express();
-app.options('*', cors()); 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 // Middleware
 app.use(cors({
   origin: "https://simple-mern-auths.vercel.app/",
